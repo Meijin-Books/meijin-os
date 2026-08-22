@@ -1,0 +1,47 @@
+[BOOT] M-mode -> S-mode. Now in supervisor.
+[MMU] before: pc runs on physical address.
+[MMU] after : pc runs on VIRTUAL address.
+[MMU] read from 0x20000000 -> 0xdeadbeef
+[MMU] wrote to 0x20000000
+[MMU] physical 0x80300000 -> 0xcafebabe
+
+--- EXP1: interleave ---
+[PROC] created pid=1 (pt=0x80026000)
+[PROC] created pid=2 (pt=0x8004b000)
+[PROC] entering U-mode...
+ABABABABABABABAB[SYS] process 1 exited.
+[SYS] process 2 exited.
+[PROC] all processes exited.
+
+--- EXP2: same VA, different place ---
+[PROC] created pid=1 (pt=0x80070000)
+[PROC] created pid=2 (pt=0x80095000)
+0xaaaaaaaa[SYS] process 2 exited.
+
+[SYS] process 1 exited.
+[PROC] all processes exited.
+
+--- EXP3: the summit (page fault) ---
+[PROC] created pid=1 (pt=0x800ba000)
+[PROC] created pid=2 (pt=0x800df000)
+[PROC] entering U-mode (pid=1)...
+XB
+[TRAP] scause=15 (Store page fault)
+[TRAP] stval=0x00005000  sepc=0x00001024
+  -> pid=1 tried to touch an unmapped address.
+  -> killing pid=1.
+BBBBBBB
+[SYS] process 2 exited.
+[PROC] all processes exited.
+
+--- EXP4: IPC ---
+[PROC] created pid=1 (pt=0x80104000)
+[PROC] created pid=2 (pt=0x80129000)
+[IPC] pid=1 -> pid=2 : 0x00001234
+[IPC] pid=2 received 0x00001234 from pid=1
+[SYS] process 1 exited.
+0x00001234
+[SYS] process 2 exited.
+[PROC] all processes exited.
+
+=== ALL EXPERIMENTS DONE ===
