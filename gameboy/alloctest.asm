@@ -5,6 +5,8 @@ SECTION "Header", ROM0[$100]
     ds $150 - @, 0
 SECTION "MainCode", ROM0
 ; --- Alloc: 空き部屋を探して貸し出す(HL=部屋の番地、満室ならHL=0) ---
+; 注意: Alloc/Free は台帳 wAllocMap を「読んで書き戻す」。このテストは割り込みなしで動くが、
+;       v0.2 以降の OS に組み込むときは、読み〜書き戻しを di / ei で挟む（第15章5節・第16章3節）。
 Alloc:
     push bc
     ld a, [wAllocMap]        ; 各ビットが1部屋の「使用中」札

@@ -25,9 +25,8 @@ ABABABABABABABAB[SYS] process 1 exited.
 [PROC] created pid=1 (pt=0x800ba000)
 [PROC] created pid=2 (pt=0x800df000)
 [PROC] entering U-mode (pid=1)...
-XB
-[TRAP] scause=15 (Store page fault)
-[TRAP] stval=0x00005000  sepc=0x00001024
+XB[TRAP] scause=15 (Store page fault)
+[TRAP] stval=0x00005000  sepc=0x00001018
   -> pid=1 tried to touch an unmapped address.
   -> killing pid=1.
 BBBBBBB

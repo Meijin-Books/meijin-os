@@ -143,6 +143,24 @@ def main():
     check(15,'第26章2節','貸出係（Alloc / Free）が、同じ部屋を二度貸さない', ok,
           '貸出=[%s] 返却後の再貸出=$%06X'%(', '.join('$%06X'%r for r in rooms), again))
 
+    # [16] ホットキー：二つのボタンを別々のフレームで押しても効く
+    #      （エッジ同士の同時成立で判定していると、ここが通らない）
+    def hotkey_staged(a_frame, start_frame):
+        syms,instrs,prog,mem = emu68k.assemble([asm('meijin10.asm')])
+        mac = emu68k.Machine(syms,instrs,prog,mem)
+        st = {'f':0}
+        def on_frame(mm):
+            st['f'] += 1
+            if st['f'] == a_frame:     mm.pad_th0 &= ~(1<<4) & 0xFF   # A
+            if st['f'] == start_frame: mm.pad_th0 &= ~(1<<5) & 0xFF   # START
+        mac.run(max_steps=600000, frame_steps=2000, on_frame=on_frame)
+        return alive(mac)
+    a_first     = hotkey_staged(5, 8)   # A を押しながら、あとで START
+    start_first = hotkey_staged(8, 5)   # START を押しながら、あとで A
+    check(16,'第25章6節','ホットキーは、二つを別々のフレームで押しても効く',
+          a_first==[1,1,0] and start_first==[1,1,0],
+          f'A先={a_first} START先={start_first}')
+
     # ---- レポート ----
     print("="*64)
     print(" MeijinOS68k ── 本書の主張を、実際に走らせて検査")

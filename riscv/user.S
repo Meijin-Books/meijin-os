@@ -71,9 +71,6 @@ u_evil_start:
     li    a0, 88            /* 'X' */
     li    a7, 1
     ecall
-    li    a0, 10
-    li    a7, 1
-    ecall
     li    t0, 0x5000        /* 地図に載っていない番地 */
     li    t1, 0xDEADBEEF
     sw    t1, 0(t0)         /* ★ 越境 */
