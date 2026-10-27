@@ -1,4 +1,9 @@
 [BOOT] M-mode -> S-mode. Now in supervisor.
+[TRAP] handler installed.
+[TRAP] scause=2 (Illegal instruction)
+[TRAP] sepc=0x800005a4 stval=0x300022f3
+-> skipped the bad instruction.
+[TRAP] survived.
 [MMU] before: pc runs on physical address.
 [MMU] after : pc runs on VIRTUAL address.
 [MMU] read from 0x20000000 -> 0xdeadbeef

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # =====================================================================
-# verify.py ── 本書（第二部）の主張を、実際に走らせて確かめる
+# verify.py ── 本書（第3部 メガドライブ編）の主張を、実際に走らせて確かめる
 #
 #   emu68k.py（小さな68000エミュレータ）で各プログラムを実行し、
 #   本文の主張（2A=2A／プリエンプション／特権違反／トレース／隣人破壊
 #   など）が本当に成り立つかを機械的に検査します。
 #
-#   使い方：  python3 tools/verify.py      （part2-os/ で実行）
+#   使い方：  python3 tools/verify.py      （megadrive/ で実行）
 #            または  make verify
 # =====================================================================
 import os, sys, re
 HERE=os.path.dirname(os.path.abspath(__file__))
-OS=os.path.dirname(HERE)                      # part2-os/
+OS=os.path.dirname(HERE)                      # megadrive/
 sys.path.insert(0,HERE)
 import emu68k
 
@@ -89,15 +89,15 @@ def main():
     # [8] meijin10：3タスクが同居し、全員生きている
     m,_=run('meijin10.asm', max_steps=600000, frame_steps=2000)
     al=alive(m); tick=m.read16(0xFF0000)
-    check(8,'第26章5節','3タスク同居・全員生存（時計＋カウンタ＋ゾンビ）', tick>0 and al==[1,1,1], f'Tick={tick} alive={al}')
+    check(8,'第26章5節','3タスク同居・全員生存（時計＋カウンタ＋居座り）', tick>0 and al==[1,1,1], f'Tick={tick} alive={al}')
 
-    # [9] meijin10：ゾンビが暴れても時刻は進む（プリエンプションが効く）
-    check(9,'第20章7節','ゾンビが暴れても Tick が進む', tick>0, f'Tick={tick}')
+    # [9] meijin10：居座りが暴れても時刻は進む（プリエンプションが効く）
+    check(9,'第20章7節','居座りが暴れても Tick が進む', tick>0, f'Tick={tick}')
 
     # [10] 特権違反：ユーザモードで特権命令を使ったタスクだけが死ぬ
     s=src('meijin10.asm').replace(
-        "TaskZombie:\n    moveq   #0,d2\n.loop:\n    addq.w  #1,d2",
-        "TaskZombie:\n    moveq   #0,d2\n.loop:\n    move.w  #$2700,sr\n    addq.w  #1,d2")
+        "TaskHog:\n    moveq   #0,d2\n.loop:\n    addq.w  #1,d2",
+        "TaskHog:\n    moveq   #0,d2\n.loop:\n    move.w  #$2700,sr\n    addq.w  #1,d2")
     tmp=asm('_verify_priv.asm'); open(tmp,'w',encoding='utf-8').write(s)
     try:
         m,_=emu68k.run_program([tmp], max_steps=300000, frame_steps=2000)
@@ -125,10 +125,10 @@ def main():
     check(13,'第24章5節','Aボタンが届く（パッドの二回読み）', idle==0 and held>0,
           f'無押下={idle} A押下={held}')
 
-    # [14] ホットキー：Start+A の同時押しで、ゾンビだけが死ぬ
+    # [14] ホットキー：Start+A の同時押しで、居座りだけが死ぬ
     m,_=run('meijin10.asm', max_steps=600000, frame_steps=2000, pad='START+A')
     al=alive(m)
-    check(14,'第25章6節','ホットキー（Start+A）でゾンビを殺せる', al==[1,1,0], f'alive={al}')
+    check(14,'第25章6節','ホットキー（Start+A）で居座りを殺せる', al==[1,1,0], f'alive={al}')
 
     # [15] 貸出係：Alloc は同じ部屋を二度貸さない。Free で戻る（第26章2節）
     m,meta=run('meijin10.asm', max_steps=1, vblank=False)

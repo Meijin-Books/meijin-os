@@ -5,7 +5,7 @@
 ;
 ;   タスク0: 時計（1秒に一回数える）
 ;   タスク1: カウンタ（Aボタンを押した回数）
-;   タスク2: ゾンビ（譲らない行儀の悪い住人）
+;   タスク2: 居座り（譲らない行儀の悪い住人）
 ;
 ;   三人ともユーザモードで動く。カーネルには手が出せない。
 ;
@@ -14,7 +14,7 @@
 
 NUM_TASKS   equ     3
 
-; --- メモリマップ（表22-1） ---
+; --- メモリマップ（図26-1） ---
 OSVars      equ     $FF0000
 Tick        equ     OSVars+0        ; 2バイト：OSの時刻
 CurTask     equ     OSVars+2        ; 2バイト：いま動いているタスク番号
@@ -92,6 +92,13 @@ T_SIZE      equ     12              ; 一行の大きさ
 Start:
     move.w  #$2700,sr           ; 割り込みを止めて、初期化する
 
+    ; --- TMSS（後期型実機の鍵）― 第19章3節 ---
+    move.b  $A10001,d0          ; ハードウェアの版数を読む
+    andi.b  #$0F,d0
+    beq     .notmss             ; 0なら初期型。TMSSなし
+    move.l  #$53454741,$A14000  ; 'SEGA' を書いて、後期型実機の鍵を開ける
+.notmss:
+
     move.w  #$0100,$A11100      ; Z80のバスを要求
     move.w  #$0100,$A11200      ; Z80をリセット解除
 
@@ -122,7 +129,7 @@ Start:
     bsr     InitTask
 
     moveq   #2,d0
-    lea     TaskZombie,a2
+    lea     TaskHog,a2
     bsr     InitTask
 
     clr.w   CurTask
@@ -137,7 +144,7 @@ Start:
     rte                         ; ユーザモードへ落ちて、産声を上げる
 
 ; =================================================
-; InitTask ── タスクの「偽の履歴」を作る（表15-4）
+; InitTask ── タスクの「偽の履歴」を作る（表21-3）
 ;   入力： d0 = タスク番号
 ;          a2 = タスクの入り口番地
 ;
@@ -503,7 +510,7 @@ ReadPad:
     cmp.w   #$C0,d2
     bne.s   .notmagic
 
-    bsr     KillZombie          ; OS専用の仕事
+    bsr     KillHog          ; OS専用の仕事
     and.w   #$3F,d1             ; この2ビットは、アプリに配らない
 
 .notmagic:
@@ -599,17 +606,17 @@ Free:
     rts
 
 ; =================================================
-; KillZombie ── ホットキーで呼ばれる、OS専用の仕事
-;   タスク2（ゾンビ）を殺す。
+; KillHog ── ホットキーで呼ばれる、OS専用の仕事
+;   タスク2（居座り）を殺す。
 ;
 ;   殺すとは、生死フラグを0にすること。それだけ。
 ;   コードもスタックも残る。失われるのは、選ばれる資格だけ。
 ; =================================================
-KillZombie:
+KillHog:
     movem.l d0/a0,-(sp)
 
     lea     TaskTable,a0
-    moveq   #2,d0               ; タスク2 ＝ ゾンビ
+    moveq   #2,d0               ; タスク2 ＝ 居座り
     mulu    #T_SIZE,d0
     adda.w  d0,a0
     clr.b   T_ALIVE(a0)         ; 生死フラグ = 0
@@ -655,8 +662,8 @@ TaskCounter:
     trap    #0                  ; 礼儀正しく譲る
     bra.s   .loop
 
-; --- タスク2：ゾンビ。譲らない ---
-TaskZombie:
+; --- タスク2：居座り。譲らない ---
+TaskHog:
     moveq   #0,d2
 .loop:
     addq.w  #1,d2

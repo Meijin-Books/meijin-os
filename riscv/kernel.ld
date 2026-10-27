@@ -11,12 +11,12 @@ SECTIONS
     }
 
     .rodata : { *(.rodata .rodata.*) }
-    .data   : { *(.data .data.*) }
+    .data   : { *(.data .data.* .sdata .sdata.*) }   /* 小さな大域変数は .sdata に入る */
 
     . = ALIGN(4096);
     .bss : {
         bss_start = .;
-        *(.bss .bss.*)
+        *(.sbss .sbss.* .bss .bss.*)                 /* .sbss も、ゼロクリアの範囲に入れる */
         bss_end = .;
     }
 

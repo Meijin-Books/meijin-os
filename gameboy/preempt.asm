@@ -167,12 +167,14 @@ TaskA:
     ld a, [wCntA]
     inc a
     ld [wCntA], a        ; 自分の仕事をひたすら続ける
+    halt                 ; 1フレーム待つ（目で読める速さにする）
     jp TaskA             ; もう、譲らない
 
 TaskB:
     ld a, [wCntB]
     inc a
     ld [wCntB], a
+    halt
     jp TaskB
 
 ; =============================================

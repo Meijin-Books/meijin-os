@@ -163,6 +163,7 @@ TaskA:
     ld a, [wCntA]
     inc a
     ld [wCntA], a        ; 自分の仕事（カウンタを増やす）
+    halt                 ; 1フレーム待つ（目で読める速さにする）
     rst $10              ; CPUを譲る（システムコール）
     jp TaskA
 
@@ -170,6 +171,7 @@ TaskB:
     ld a, [wCntB]
     inc a
     ld [wCntB], a
+    halt
     rst $10
     jp TaskB
 

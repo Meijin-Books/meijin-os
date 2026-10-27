@@ -39,7 +39,7 @@ Free:
     push bc
     ld a, l
     swap a
-    and $0F                  ; 部屋番号
+    and $03                  ; 部屋番号（0〜3）
     ld c, a
     call BitOfC
     ld a, b
@@ -55,10 +55,10 @@ BitOfC:                      ; B = 1 << C を作る小道具
     ld a, c
     or a
     ret z
-.sh:
+.shift:
     sla b
     dec a
-    jr nz, .sh
+    jr nz, .shift
     ret
 EntryPoint:
     ld sp, $FFFE

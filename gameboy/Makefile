@@ -7,7 +7,7 @@ all: $(TARGETS)
 	rgbasm -o $@ $<
 
 %.gb: %.o
-	rgblink -o $@ $<
+	rgblink -o $@ -n $*.sym $<
 	rgbfix -v -p 0xFF $@
 
 clean:

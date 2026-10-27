@@ -8,7 +8,7 @@ enum { READY = 0, WAITING, BLOCKED, FINISHED };
 
 typedef struct task {
     u32 *sp;            /* このタスクのスタックの先頭（封印された世界） */
-    int  state;         /* READY / WAITING / BLOCKED / FINISHED */
+    volatile int state; /* READY / WAITING / BLOCKED / FINISHED（割り込みの中から書き換わる。第33章6節） */
     u32  wake_tick;     /* WAITING のとき、起きる時刻 */
     u32 *stack_bottom;  /* 番兵の置き場所（第34章4節） */
 } task_t;

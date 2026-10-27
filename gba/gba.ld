@@ -23,6 +23,7 @@ SECTIONS {
     __data_lma = LOADADDR(.data);
 
     .bss (NOLOAD) : {
+        . = ALIGN(4);
         __bss_start = .;
         *(.bss*)
         *(COMMON)
@@ -32,6 +33,7 @@ SECTIONS {
 
     /* タスクのスタックなど、大きな配列は EWRAM へ（__attribute__((section(".ewram")))） */
     .ewram (NOLOAD) : {
+        . = ALIGN(4);
         __ewram_start = .;
         *(.ewram*)
         . = ALIGN(4);

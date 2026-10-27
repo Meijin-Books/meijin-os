@@ -1,7 +1,7 @@
 ; =============================================
 ; meijin10.asm ── MeijinOS v1.0
 ; システムコール・タスクバー・メールボックス・kill
-; タスク0: 時計 / タスク1: ボタンカウンタ / タスク2: ゾンビ
+; タスク0: 時計 / タスク1: ボタンカウンタ / タスク2: 居座り
 ; =============================================
 INCLUDE "hardware.inc"
 
@@ -87,7 +87,9 @@ SwitchBody:
 .next:
     dec d
     jr nz, .pick
-    ; 誰も起きていない(本構成では起きない設計だが保険)
+    ; 誰も起きていない ― 割り込み禁止中はtickが進まないので、
+    ; ここへ落ちると抜けられない。居座りが常に起きているから到達しないだけ。
+    ; 到達しうる構成ではアイドルタスクかei/haltが要る(第33章6節)
     jr .pick
 .found:
     ; 選ばれたタスクのSPを取り出す
@@ -196,10 +198,10 @@ VBlankHandler:
 .tickdone:
     ; --- 入力を読む(アクションボタン側) ---
     ld a, %00010000          ; ビット5=0でA/B/Select/Startを選択
-    ld [$FF00], a
+    ld [rP1], a
     nop
     nop
-    ld a, [$FF00]
+    ld a, [rP1]
     cpl                      ; 押下=1に反転
     and $0F                  ; 0:A 1:B 2:Select 3:Start
     ld b, a                  ; B = いま押されている
@@ -220,7 +222,7 @@ VBlankHandler:
     ld a, 0
     ld [wTasks + 2*8 + 2], a ; タスク2のalive=0
 .nokill:
-    ; --- 表示スロット4つをBGへ(16進2桁ずつ) ---
+    ; --- 表示スロット0〜2の3つをBGへ(16進2桁ずつ) ---
     ld a, [wShow + 0]
     ld hl, $9800 + 2*32 + 2
     call DrawHexByte
@@ -336,9 +338,9 @@ EntryPoint:
     ld a, h
     ld [wTasks + 2*8 + 1], a
     ld hl, $D280 - 2
-    ld a, LOW(TaskZombie)
+    ld a, LOW(TaskHog)
     ld [hli], a
-    ld a, HIGH(TaskZombie)
+    ld a, HIGH(TaskHog)
     ld [hl], a
     ; タスクバーの位置(画面最下行)
     ld a, 136
@@ -390,13 +392,13 @@ TaskCounter:                 ; Aボタンを押した回数を表示
     rst $10                  ; 礼儀正しく譲る
     jr .loop
 
-TaskZombie:                  ; 行儀の悪い住人(第13章のあいつ)
-    ld a, [wZom]
+TaskHog:                  ; 行儀の悪い住人(第13章のあいつ)
+    ld a, [wHog]
     inc a
-    ld [wZom], a
+    ld [wHog], a
     ld c, 2
     rst $18
-    jr TaskZombie            ; 譲らない
+    jr TaskHog            ; 譲らない
 
 ; =============================================
 SECTION "TileData", ROM0
@@ -427,11 +429,11 @@ wInputEdge: ds 1             ; $C003 メールボックス
 wPrevPad:   ds 1             ; $C004
 wShow:      ds 4             ; $C005 表示スロット
 wSPSave:    ds 2             ; $C009
-wZom:       ds 1             ; $C00B
+wHog:       ds 1             ; $C00B
 SECTION "TaskTable", WRAM0[$C010]
 wTasks:     ds 24            ; 3タスク×8バイト(SP2,alive1,wake2,予備3)
 
 SECTION "Stacks", WRAMX[$D100], BANK[1]
     ds 128                   ; タスク0(時計) $D100〜 天井$D180
     ds 128                   ; タスク1(カウンタ) 天井$D200
-    ds 128                   ; タスク2(ゾンビ) 天井$D280
+    ds 128                   ; タスク2(居座り) 天井$D280

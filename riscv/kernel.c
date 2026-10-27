@@ -100,7 +100,7 @@ static void switch_pt(uint32_t *root) {
 struct process {
     int pid, state;
     uint32_t *page_table;
-    uint32_t tf[33];        /* [0]=PC, [1..31]=x1..x31 */
+    uint32_t tf[32];        /* [0]=PC, [1..31]=x1..x31（計32 word） */
 };
 static struct process procs[MAX_PROCS];
 static struct process *current;
@@ -203,8 +203,7 @@ static void handle_syscall(void) {
     case SYS_EXIT:
         uart_puts("[SYS] process "); put_dec(current->pid); uart_puts(" exited.\n");
         current->state = DEAD;
-        schedule();
-        break;
+        break;                       /* 切り替えは trap_handler の帰り道の一回だけ */
     case SYS_YIELD:
         break;                       /* trap_handler 側で切替 */
     case SYS_SEND: {
@@ -242,7 +241,21 @@ static const char *fault_name(uint32_t c) {
     return "Store";
 }
 
+/* ---- 第40章7節: 不正命令から、生きて戻る実験 ---- */
+static uint32_t probe_tf[32];          /* 実験中だけ sscratch が指す退避領域 */
+static volatile int probe_active;
+
 void trap_handler(uint32_t scause, uint32_t sepc, uint32_t stval) {
+    if (probe_active) {                /* この実験のときだけ：不正命令を飛ばして戻す */
+        probe_active = 0;
+        uart_puts("[TRAP] scause="); put_dec(scause); uart_puts(" (Illegal instruction)\n");
+        uart_puts("[TRAP] sepc="); put_hex(sepc);
+        uart_puts(" stval="); put_hex(stval); uart_puts("\n");
+        uart_puts("-> skipped the bad instruction.\n");
+        probe_tf[F_PC] = sepc + 4;     /* trap_entry の復元経路が [0] を sepc に戻す */
+        return;
+    }
+
     uint32_t *tf = current->tf;
     tf[F_PC] = sepc;
 
@@ -262,8 +275,7 @@ void trap_handler(uint32_t scause, uint32_t sepc, uint32_t stval) {
         uart_puts(" tried to touch an unmapped address.\n");
         uart_puts("  -> killing pid="); put_dec(current->pid); uart_puts(".\n");
         current->state = DEAD;
-        schedule();
-        break;
+        break;                       /* 切り替えは帰り道の一回だけ */
     default:
         uart_puts("[TRAP] unexpected scause="); put_dec(scause);
         uart_puts(" sepc="); put_hex(sepc); uart_puts("\n");
@@ -295,21 +307,23 @@ static void trap_init(void) {
     __asm__ volatile("csrw stvec, %0" :: "r"((uint32_t)trap_entry));
 }
 
-/* ---- 第40章7節: 不正命令のstvalを実測 ---- */
-static volatile int probe_done;
-static uint32_t probe_scause, probe_sepc, probe_stval;
-
+/* ---- 第40章7節: S-mode から mstatus を読む → illegal instruction → 生きて戻る ---- */
 void probe_illegal(void) {
-    /* S-mode から mstatus を読む → illegal instruction */
+    __asm__ volatile("csrw sscratch, %0" :: "r"((uint32_t)probe_tf));
+    probe_active = 1;
     uart_puts("[TRAP] handler installed.\n");
-    uint32_t t;
-    __asm__ volatile("csrr %0, mstatus" : "=r"(t));
+    __asm__ volatile("csrr t0, mstatus" ::: "t0");   /* 本文と同じ一命令（機械語 0x300022f3） */
     uart_puts("[TRAP] survived.\n");
+    __asm__ volatile("csrw sscratch, zero");
 }
 
 void kernel_main(void) {
     next_free = heap_start;
     uart_puts("[BOOT] M-mode -> S-mode. Now in supervisor.\n");
+
+    /* ---- 第40章7節: トラップ実験 ---- */
+    trap_init();
+    probe_illegal();
 
     kernel_map_init();
 
@@ -328,7 +342,6 @@ void kernel_main(void) {
     uart_puts("[MMU] physical 0x80300000 -> ");
     put_hex(*(volatile uint32_t *)0x80300000); uart_puts("\n");
 
-    trap_init();
     run_stage();
     for(;;);
 }

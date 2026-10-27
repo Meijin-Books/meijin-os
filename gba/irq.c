@@ -8,12 +8,12 @@ unsigned irq_disable(void)
 {
     unsigned cpsr;
     __asm__ volatile("mrs %0, cpsr" : "=r"(cpsr));
-    __asm__ volatile("msr cpsr_c, %0" :: "r"(cpsr | 0x80));
+    __asm__ volatile("msr cpsr_c, %0" :: "r"(cpsr | 0x80) : "memory");
     return cpsr;                    /* 元の状態を返す */
 }
 void irq_restore(unsigned cpsr)
 {
-    __asm__ volatile("msr cpsr_c, %0" :: "r"(cpsr));
+    __asm__ volatile("msr cpsr_c, %0" :: "r"(cpsr) : "memory");
 }
 
 /* 協調版のディスパッチャ（第29章3節）。BIOS が IRQ モード・割り込み禁止で呼ぶ。

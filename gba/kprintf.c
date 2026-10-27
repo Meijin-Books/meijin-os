@@ -27,6 +27,9 @@ void kprintf_init(void)
 
 void kprintf(const char *fmt, ...)
 {
+    /* buf と n は全タスクで一本。途中で切り替わると文字が混ざるので、
+       書き終えて合図を送るまで割り込みを止める（第36章2節） */
+    unsigned s = irq_disable();
     va_list ap;
     va_start(ap, fmt);
     for (; *fmt; fmt++) {
@@ -51,4 +54,5 @@ void kprintf(const char *fmt, ...)
         }
     }
     va_end(ap);
+    irq_restore(s);
 }

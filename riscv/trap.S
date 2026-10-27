@@ -1,6 +1,6 @@
 /* トラップの入口。
    sscratch = 現在プロセスの trap frame の番地。
-   frame layout: [0]=PC, [1..31] = x1..x31  (計33 word) */
+   frame layout: [0]=PC, [1..31] = x1..x31  (計32 word) */
 
 .section .text
 .align 4

@@ -14,7 +14,7 @@
 
 NUM_TASKS   equ     3
 
-; --- メモリマップ（表22-1） ---
+; --- メモリマップ（図26-1） ---
 OSVars      equ     $FF0000
 Tick        equ     OSVars+0        ; 2バイト：OSの時刻
 CurTask     equ     OSVars+2        ; 2バイト：いま動いているタスク番号
@@ -90,6 +90,13 @@ T_SIZE      equ     12              ; 一行の大きさ
 Start:
     move.w  #$2700,sr           ; 割り込みを止めて、初期化する
 
+    ; --- TMSS（後期型実機の鍵）― 第19章3節 ---
+    move.b  $A10001,d0          ; ハードウェアの版数を読む
+    andi.b  #$0F,d0
+    beq     .notmss             ; 0なら初期型。TMSSなし
+    move.l  #$53454741,$A14000  ; 'SEGA' を書いて、後期型実機の鍵を開ける
+.notmss:
+
     move.w  #$0100,$A11100      ; Z80のバスを要求
     move.w  #$0100,$A11200      ; Z80をリセット解除
 
@@ -120,7 +127,7 @@ Start:
     bsr     InitTask
 
     moveq   #2,d0
-    lea     TaskZombie,a2
+    lea     TaskHog,a2
     bsr     InitTask
 
     clr.w   CurTask
@@ -135,7 +142,7 @@ Start:
     rte                         ; ユーザモードへ落ちて、産声を上げる
 
 ; =================================================
-; InitTask ── タスクの「偽の履歴」を作る（表15-4）
+; InitTask ── タスクの「偽の履歴」を作る（表21-3）
 ;   入力： d0 = タスク番号
 ;          a2 = タスクの入り口番地
 ;
@@ -550,7 +557,7 @@ TaskCounter:
                                 ;   踏み潰されていたら、ここで死ぬ
 
 ; --- タスク2：無関係な傍観者。ただ数えているだけ ---
-TaskZombie:
+TaskHog:
     moveq   #0,d2
 .loop:
     addq.w  #1,d2

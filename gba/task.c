@@ -159,6 +159,8 @@ u16  svc_getkey(void)  { return input_getkey(); }
 
 void svc_exit(void)
 {
+    unsigned s = irq_disable();     /* 記す瞬間だけ、割り込みを止める（第30章3節） */
     current_tcb->state = FINISHED;  /* 殺すとは、状態を一つ書くこと */
-    for (;;) svc_yield();           /* 二度と選ばれない */
+    irq_restore(s);
+    for (;;) svc_yield();           /* 二度と選ばれない。区画の回収は未実装（演習） */
 }

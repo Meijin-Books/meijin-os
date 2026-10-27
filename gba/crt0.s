@@ -1,5 +1,5 @@
 @ crt0.s -- 電源投入から main まで（第28章4節・付録H-1）
-@   四つの仕事: ヘッダを飛び越す / 二本のスタックを立てる / .data を写す / .bss を消す
+@   四つの仕事: ヘッダを飛び越す / 二本のスタックを立てる / .data を写す / .bss と .ewram を消す
     .section .crt0, "ax"
     .arm
     .global _start
@@ -28,6 +28,12 @@ _boot:
 2:  cmp   r1, r2
     strlo r3, [r1], #4
     blo   2b
+
+    ldr   r1, =__ewram_start @ .ewram も 0 で埋める（r3 は 0 のまま）
+    ldr   r2, =__ewram_end
+3:  cmp   r1, r2
+    strlo r3, [r1], #4
+    blo   3b
 
     ldr   r0, =main        @ C 言語の main へ
     bx    r0
