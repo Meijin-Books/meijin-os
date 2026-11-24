@@ -1,3 +1,5 @@
+日本語 | [English](README.en.md)
+
 # 第5部　RISC-V 編 ── MeijinOSrv（RV32 / QEMU virt）
 
 書籍『OS の基本実装概要 ― ゲームボーイ・メガドライブ・GBA・RISC-V ― 四つの機械で、同じ骨格を四度つくる』第5部（第37〜46章）・付録H のソースコードです。

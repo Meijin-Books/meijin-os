@@ -1,5 +1,5 @@
 # MeijinOS（ゲームボーイ）── ビルド。必要なもの: RGBDS（rgbasm / rgblink / rgbfix）
-TARGETS = coop.gb preempt.gb selfish.gb meijin10.gb smash.gb alloctest.gb
+TARGETS = hello.gb move.gb coop.gb preempt.gb selfish.gb meijin10.gb smash.gb alloctest.gb
 
 all: $(TARGETS)
 

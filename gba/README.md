@@ -1,3 +1,5 @@
+日本語 | [English](README.en.md)
+
 # 第4部　GBA 編 ── MeijinOS/ARM（ARM7TDMI）
 
 書籍『OS の基本実装概要 ― ゲームボーイ・メガドライブ・GBA・RISC-V ― 四つの機械で、同じ骨格を四度つくる』第4部（第27〜36章）・付録H のソースコードです。
